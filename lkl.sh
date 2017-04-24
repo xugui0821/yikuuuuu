@@ -99,17 +99,18 @@ cd /root/lkl
 cat > /root/lkl/haproxy.cfg<<-EOF
 global
 
+global
+user haproxy
+group haproxy
 defaults
-log global
 mode tcp
-option dontlognull
-timeout connect 5000
-timeout client 50000
-timeout server 50000
+timeout connect 5s
+timeout client 60s
+timeout server 60s
 
-frontend proxy-in
+listen shadowsocks
 bind *:6688
-default_backend proxy-out
+server server1 10.0.0.1:6666
 
 backend proxy-out
 server server1 10.0.0.1 maxconn 20480
@@ -119,7 +120,7 @@ EOF
 wget --no-check-certificate https://github.com/xugui0821/yikuuuuu/raw/master/liblkl-hijack.so
 
 cat > /root/lkl/lkl.sh<<-EOF
-LD_PRELOAD=/root/lkl/liblkl-hijack.so LKL_HIJACK_NET_QDISC="root|fq" LKL_HIJACK_SYSCTL="net.ipv4.tcp_congestion_control=bbr;net.ipv4.tcp_wmem=4096 65536 67108864" LKL_HIJACK_NET_IFTYPE=tap LKL_HIJACK_NET_IFPARAMS=tap0 LKL_HIJACK_NET_IP=10.0.0.2 LKL_HIJACK_NET_NETMASK_LEN=24 LKL_HIJACK_NET_GATEWAY=10.0.0.1 LKL_HIJACK_OFFLOAD="0x8883" haproxy -f /root/lkl/haproxy.cfg
+LD_PRELOAD=/root/lkl/liblkl-hijack.so LKL_HIJACK_NET_QDISC="root|fq" LKL_HIJACK_SYSCTL="net.ipv4.tcp_congestion_control=bbr;net.ipv4.tcp_wmem=4096 65536 67108864" LKL_HIJACK_NET_IFTYPE=tap LKL_HIJACK_NET_IFPARAMS=lkl-tap LKL_HIJACK_NET_IP=10.0.0.2 LKL_HIJACK_NET_NETMASK_LEN=24 LKL_HIJACK_NET_GATEWAY=10.0.0.1 LKL_HIJACK_OFFLOAD="0x8883" haproxy -f /root/lkl/haproxy.cfg
 EOF
 
 
@@ -131,7 +132,11 @@ ip link set lkl-tap up
 sysctl -w net.ipv4.ip_forward=1
 iptables -P FORWARD ACCEPT 
 iptables -t nat -A POSTROUTING -o venet0 -j MASQUERADE
-iptables -t nat -A PREROUTING -i venet0 -p tcp --dport 6688 -j DNAT --to-destination 10.0.0.2
+iptables -t nat -D PREROUTING -i venet0 -p tcp --dport 6688 -j DNAT --to-destination 10.0.0.2 
+iptables -t nat -A PREROUTING -i venet0 -p tcp --dport 6688 -j DNAT --to-destination 10.0.0.2 
+
+iptables -t nat -D PREROUTING -i venet0 -p udp --dport 6688 -j REDIRECT --to-port 6666 
+iptables -t nat -A PREROUTING -i venet0 -p udp --dport 6688 -j REDIRECT --to-port 6666 
 
 nohup /root/lkl/lkl.sh &
 
