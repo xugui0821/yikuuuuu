@@ -109,7 +109,7 @@ timeout client 60s
 timeout server 60s
 
 listen shadowsocks
-bind *:6688
+bind 10.0.0.2:6688
 server server1 10.0.0.1:6666
 
 backend proxy-out
