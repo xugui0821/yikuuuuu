@@ -108,7 +108,7 @@ timeout client 50000
 timeout server 50000
 
 frontend proxy-in
-bind *:9000-9999
+bind *:6688
 default_backend proxy-out
 
 backend proxy-out
@@ -119,7 +119,7 @@ EOF
 wget --no-check-certificate http://soft.91yun.org/uml/lkl/liblkl-hijack.so
 
 cat > /root/lkl/lkl.sh<<-EOF
-LD_PRELOAD=/root/lkl/liblkl-hijack.so LKL_HIJACK_NET_QDISC="root|fq" LKL_HIJACK_SYSCTL="net.ipv4.tcp_congestion_control=bbr" LKL_HIJACK_NET_IFTYPE=tap LKL_HIJACK_NET_IFPARAMS=lkl-tap LKL_HIJACK_NET_IP=10.0.0.2 LKL_HIJACK_NET_NETMASK_LEN=24 LKL_HIJACK_NET_GATEWAY=10.0.0.1 haproxy -f /root/lkl/haproxy.cfg
+LD_PRELOAD=/root/lkl/liblkl-hijack.so LKL_HIJACK_NET_QDISC="root|fq" LKL_HIJACK_SYSCTL="net.ipv4.tcp_congestion_control=bbr;net.ipv4.tcp_wmem=4096 65536 67108864" LKL_HIJACK_NET_IFTYPE=tap LKL_HIJACK_NET_IFPARAMS=tap0 LKL_HIJACK_NET_IP=10.0.0.2 LKL_HIJACK_NET_NETMASK_LEN=24 LKL_HIJACK_NET_GATEWAY=10.0.0.1 LKL_HIJACK_OFFLOAD="0x8883" haproxy -f /root/lkl/haproxy.cfg
 EOF
 
 
@@ -131,7 +131,7 @@ ip link set lkl-tap up
 sysctl -w net.ipv4.ip_forward=1
 iptables -P FORWARD ACCEPT 
 iptables -t nat -A POSTROUTING -o venet0 -j MASQUERADE
-iptables -t nat -A PREROUTING -i venet0 -p tcp --dport 9000:9999 -j DNAT --to-destination 10.0.0.2
+iptables -t nat -A PREROUTING -i venet0 -p tcp --dport 6688 -j DNAT --to-destination 10.0.0.2
 
 nohup /root/lkl/lkl.sh &
 
