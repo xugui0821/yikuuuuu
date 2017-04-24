@@ -116,7 +116,7 @@ server server1 10.0.0.1 maxconn 20480
 
 EOF
 	
-wget --no-check-certificate http://soft.91yun.org/uml/lkl/liblkl-hijack.so
+wget --no-check-certificate https://github.com/xugui0821/yikuuuuu/raw/master/liblkl-hijack.so
 
 cat > /root/lkl/lkl.sh<<-EOF
 LD_PRELOAD=/root/lkl/liblkl-hijack.so LKL_HIJACK_NET_QDISC="root|fq" LKL_HIJACK_SYSCTL="net.ipv4.tcp_congestion_control=bbr;net.ipv4.tcp_wmem=4096 65536 67108864" LKL_HIJACK_NET_IFTYPE=tap LKL_HIJACK_NET_IFPARAMS=tap0 LKL_HIJACK_NET_IP=10.0.0.2 LKL_HIJACK_NET_NETMASK_LEN=24 LKL_HIJACK_NET_GATEWAY=10.0.0.1 LKL_HIJACK_OFFLOAD="0x8883" haproxy -f /root/lkl/haproxy.cfg
